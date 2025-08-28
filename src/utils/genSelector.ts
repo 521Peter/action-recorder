@@ -1,3 +1,16 @@
+const method = [
+  "get",
+  "post",
+  "put",
+  "delete",
+  "patch",
+  "GET",
+  "POST",
+  "PUT",
+  "DELETE",
+  "PATCH",
+];
+
 // 是否是唯一的选择器
 function isUniqueSelector(selector: string, doc: Element | Document): boolean {
   const elements = doc.querySelectorAll(selector);
@@ -28,7 +41,9 @@ export function isRandomSelector(selector: string) {
 
   function isMixedCaseRandom(str: string) {
     // 统计大小写字母数量
-    let upper = 0, lower = 0, letterCount = 0;
+    let upper = 0,
+      lower = 0,
+      letterCount = 0;
     for (const c of str) {
       // 跳过非字母
       if (!/^[a-zA-Z]$/.test(c)) continue;
@@ -45,15 +60,12 @@ export function isRandomSelector(selector: string) {
     return /\d{3,}/.test(str);
   }
   try {
-    if (!selector) return false
+    if (!selector) return false;
 
     // 综合判断
-    return (
-      hasRandomSubstring(selector) ||
-      hasConsecutiveDigits(selector)
-    );
+    return hasRandomSubstring(selector) || hasConsecutiveDigits(selector);
   } catch (error) {
-    console.error('isRandomSelector error: ', error, selector)
+    console.error("isRandomSelector error: ", error, selector);
   }
 }
 
@@ -80,21 +92,46 @@ function getPatternSelector(name: string, value: string): string | null {
   // 检测前缀稳定的情况（如 "first_name-1615234155262"）
   // 匹配字母、下划线组成的前缀，后面跟连字符和数字
   const prefixMatch = value.match(/^([a-zA-Z_.]+)[-_]\d+/);
-  if (prefixMatch && prefixMatch[1].length >= 3) {
+  if (
+    prefixMatch &&
+    prefixMatch[1].length >= 3 &&
+    !method.includes(prefixMatch[1])
+  ) {
     return `[${name}^="${prefixMatch[1]}"]`;
   }
 
   // 检测后缀稳定的情况（如 "123456-submit_btn"）
   const suffixMatch = value.match(/^\d+[-_]([a-zA-Z_]+)$/);
-  if (suffixMatch && suffixMatch[1].length >= 3) {
+  if (
+    suffixMatch &&
+    suffixMatch[1].length >= 3 &&
+    !method.includes(suffixMatch[1])
+  ) {
     return `[${name}$="${suffixMatch[1]}"]`;
   }
 
   // 检测特定的常见单词模式，优先级从高到低
   const priorityWords = [
-    'email', 'password', 'submit', 'cancel', 'save', 'delete', 'edit', 'add', 'remove',
-    'button', 'input', 'form', 'field', 'text', 'name',
-    'modal', 'container', 'content', 'btn'
+    "textarea",
+    "email",
+    "password",
+    "submit",
+    "cancel",
+    "save",
+    "delete",
+    "edit",
+    "add",
+    "remove",
+    "button",
+    "input",
+    "form",
+    "field",
+    "text",
+    "name",
+    "modal",
+    "container",
+    "content",
+    "btn",
   ];
 
   for (const word of priorityWords) {
@@ -103,21 +140,14 @@ function getPatternSelector(name: string, value: string): string | null {
       // 找到单词在原始值中的位置，保持原始大小写
       const wordIndex = lowerValue.indexOf(word);
       if (wordIndex !== -1) {
-        const originalWord = value.substring(wordIndex, wordIndex + word.length);
+        const originalWord = value.substring(
+          wordIndex,
+          wordIndex + word.length
+        );
         return `[${name}*="${originalWord}"]`;
       }
     }
   }
-
-  // 检测中间稳定的情况，寻找被数字或特殊字符包围的有意义单词
-  // 匹配形如 abc123_meaningful_word_456def 的模式
-  const segments = value.split(/[0-9_-]+/).filter(seg => seg.length >= 4 && /^[a-zA-Z]+$/.test(seg));
-  if (segments.length > 0) {
-    // 选择最长的有意义片段
-    const longestSegment = segments.reduce((a, b) => a.length > b.length ? a : b);
-    return `[${name}*="${longestSegment}"]`;
-  }
-
   return null;
 }
 
@@ -134,22 +164,33 @@ function getAttributeSelectors(element: Element): string[] {
         "data-regerror",
         "data-color",
         "data-loading",
-        "data-app-version"
+        "data-app-version",
+        "style",
+        "required",
+        "value",
+        "disabled",
+        "class",
+        "id",
       ];
+
+      // 排除事件属性
+      const isEventAttribute = name.startsWith("on");
       if (
         /^\d+$/.test(name) ||
         /^\d+$/.test(value) ||
         name.startsWith("data-v-") ||
         excludeNames.includes(name) ||
+        isEventAttribute ||
         name.length >= 20 ||
         isRandomSelector(value) ||
-        /\s/.test(value)
+        value.includes("true") ||
+        value.includes("false") ||
+        method.includes(value)
       ) {
         return false;
       }
 
-      const includeNames = ["role", "aria-label", "name", "type", "href", "id", "class"];
-      return name.startsWith("data-") || includeNames.includes(name);
+      return true;
     })
     .map(({ name, value }) => {
       if (!value || value.length > 40) {
@@ -163,7 +204,7 @@ function getAttributeSelectors(element: Element): string[] {
 
       return `[${name}='${value}']`;
     })
-    .filter(selector => selector !== null) // 过滤掉 null 值
+    .filter((selector) => selector !== null) // 过滤掉 null 值
     .sort((a, b) => a.length - b.length);
   return validAttributes;
 }
@@ -184,8 +225,8 @@ function getClassSelectors(element: Element): string[] {
     }
     // 如果类名看起来是随机的，尝试生成模式匹配的属性选择器
     else if (isRandomSelector(cls) && cls.length > 5) {
-      const patternSelector = getPatternSelector('class', cls);
-      if (patternSelector) {
+      const patternSelector = getPatternSelector("class", cls) ?? "";
+      if (!isRandomSelector(patternSelector)) {
         classSelectors.push(patternSelector);
       }
     }
@@ -197,7 +238,13 @@ function getClassSelectors(element: Element): string[] {
 // 获取id选择器
 function getIdSelector(element: Element) {
   const { id } = element;
-  if (!id || typeof id !== "string" || /^\d/.test(id) || /^-/.test(id)) {
+  if (
+    !id ||
+    typeof id !== "string" ||
+    /^\d/.test(id) ||
+    /^-/.test(id) ||
+    id.includes("$")
+  ) {
     return "";
   }
 
@@ -205,11 +252,10 @@ function getIdSelector(element: Element) {
   if (!isRandomSelector(id)) {
     return `#${escapeStr(id)}`;
   }
-
   // 如果 ID 看起来是随机的，尝试生成模式匹配的属性选择器
-  if (id.length > 5) {
-    const patternSelector = getPatternSelector('id', id);
-    if (patternSelector) {
+  else if (isRandomSelector(id) && id.length > 5) {
+    const patternSelector = getPatternSelector("id", id) ?? "";
+    if (!isRandomSelector(patternSelector)) {
       return patternSelector;
     }
   }
@@ -243,7 +289,11 @@ function escapeStr(str: string) {
 }
 
 // 尝试单一选择器
-function trySelector(selector: string, path: string[], doc: Document | Element): string | false {
+function trySelector(
+  selector: string,
+  path: string[],
+  doc: Document | Element
+): string | false {
   if (!selector) return false;
   path.unshift(selector);
   const fullSelector = generateSelectorPath(path);
@@ -273,8 +323,8 @@ function tryCombinations(
   tagName: string,
   selectors1: string[],
   selectors2: string[],
-  path: string[]
-  , doc: Document | Element
+  path: string[],
+  doc: Document | Element
 ): string | false {
   for (let i = 0; i < selectors1.length; i++) {
     for (let j = i + 1; j < selectors2.length; j++) {
@@ -291,7 +341,7 @@ function generateUniqueSelector(element: Element, scope?: Element): string {
   if (!element) {
     return "";
   }
-  let currentDoc = scope ?? element.ownerDocument?.documentElement
+  let currentDoc = scope ?? element.ownerDocument?.documentElement;
 
   try {
     // 优先检查 ID

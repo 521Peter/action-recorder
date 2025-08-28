@@ -10,6 +10,7 @@ interface FormElementsMessage {
   action: string;
   formElements?: FormGroups;
   totalElements?: number;
+  origin: string;
 }
 
 // 监听来自内容脚本的消息
@@ -23,12 +24,29 @@ chrome.runtime.onMessage.addListener(
       chrome.storage.local.set(
         { formElements: formElements, totalElements: totalElements },
         () => {
-          console.log("表单元素已更新，共计", totalElements, "个元素", formElements);
+          console.log(
+            "表单元素已更新，共计",
+            totalElements,
+            "个元素",
+            formElements
+          );
         }
       );
 
       // 更新扩展图标上的徽章，显示找到的表单元素数量
       updateBadge(totalElements);
+    }
+
+    // 处理清除网站数据的请求
+    if (message.action === "clearSiteData" && message.origin) {
+      handleClearSiteData(message.origin)
+        .then(() => {
+          sendResponse({ success: true });
+        })
+        .catch((error: any) => {
+          sendResponse({ success: false, error: error.message });
+        });
+      return true; // 保持消息通道开放以进行异步响应
     }
 
     return true;
@@ -42,6 +60,26 @@ function updateBadge(count: number): void {
     chrome.action.setBadgeBackgroundColor({ color: "#4CAF50" });
   } else {
     chrome.action.setBadgeText({ text: "" });
+  }
+}
+
+// 清除网站数据
+async function handleClearSiteData(origin: string): Promise<void> {
+  try {
+    await chrome.browsingData.remove(
+      { origins: [origin] },
+      {
+        appcache: true,
+        cacheStorage: true,
+        cookies: true,
+        indexedDB: true,
+        localStorage: true,
+        serviceWorkers: true,
+        webSQL: true,
+      }
+    );
+  } catch (error: any) {
+    throw new Error(`清除网站数据失败: ${error.message}`);
   }
 }
 

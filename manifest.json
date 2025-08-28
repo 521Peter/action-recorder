@@ -17,7 +17,8 @@
     "sidePanel",
     "contextMenus",
     "clipboardWrite",
-    "tabs"
+    "tabs",
+    "browsingData"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
