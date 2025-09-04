@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "zip": "npm run build && (cd dist && zip -r ../form-scraper.zip .)"
+    "zip": "node scripts/update-version.cjs && npm run build && (cd dist && zip -r ../form-scraper.zip .)"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",

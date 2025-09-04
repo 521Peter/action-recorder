@@ -13,23 +13,7 @@ import {
 import { useState, useEffect } from "react";
 import { showToast } from "@/utils/toastManager";
 import { FaSave, FaTrash, FaPlay, FaRedo, FaCode } from "react-icons/fa";
-import { minify } from "terser";
-
-/**
- * 移除JavaScript代码中的注释
- * @param code 原始代码
- * @returns 移除注释后的代码
- */
-async function removeComments(code: string): Promise<string> {
-  const result = await minify(code, {
-    compress: false,
-    mangle: false,
-    format: {
-      comments: false,
-    },
-  });
-  return result.code ?? "";
-}
+import { removeComments } from "@/utils/scriptInjector";
 
 /**
  * 脚本注入器组件
@@ -60,9 +44,7 @@ function Debug() {
       return;
     }
 
-    // 移除注释后保存
-    const codeWithoutComments = await removeComments(code);
-    chrome.storage.local.set({ customScript: codeWithoutComments }, () => {
+    chrome.storage.local.set({ customScript: code }, () => {
       showToast.success("脚本已保存，将在所有网站自动执行");
     });
   };

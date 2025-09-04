@@ -171,6 +171,7 @@ function getAttributeSelectors(element: Element): string[] {
         "disabled",
         "class",
         "id",
+        "lang"
       ];
 
       // 排除事件属性
@@ -195,6 +196,16 @@ function getAttributeSelectors(element: Element): string[] {
     .map(({ name, value }) => {
       if (!value || value.length > 40) {
         return `[${name}]`;
+      }
+
+      // 如果开头或者结尾是空格/换行符
+      if (
+        value.startsWith(" ") ||
+        value.endsWith(" ") ||
+        value.startsWith("\n") ||
+        value.endsWith("\n")
+      ) {
+        return `[${name}*='${value.trim()}']`;
       }
 
       // 处理JSON类型的属性值
