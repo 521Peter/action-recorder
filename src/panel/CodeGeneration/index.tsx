@@ -203,93 +203,93 @@ function CodeGeneration() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
                             {records.map((record, index) => (
                                 <div
                                     key={index}
-                                    className={`p-6 border rounded-lg w-full transition-all duration-200 hover:shadow-md ${record.type === 'scroll'
+                                    className={`p-3 border rounded-lg w-full transition-all duration-200 hover:shadow-md ${record.type === 'scroll'
                                         ? "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-300 hover:border-blue-400"
                                         : "bg-gradient-to-r from-green-50 to-green-100 border-green-300 hover:border-green-400"
                                         }`}
                                 >
                                     {record.type === 'click' ? (
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             <div className="flex items-center justify-between w-full">
                                                 <div className="flex items-center space-x-2">
-                                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                                    <span className="font-bold text-green-700 text-lg">
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                    <span className="font-bold text-green-700 text-base">
                                                         点击操作
                                                     </span>
                                                 </div>
-                                                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                                                     #{index + 1}
                                                 </Badge>
                                             </div>
 
-                                            <div className="bg-white/70 rounded-md p-3 border border-green-200">
-                                                <p className="font-medium text-green-800">
+                                            <div className="bg-white/70 rounded-md p-2 border border-green-200">
+                                                <p className="font-medium text-green-800 text-sm">
                                                     📍 {record.text || record.label || '无文本'}
                                                 </p>
                                             </div>
 
                                             {record.label && (
-                                                <div className="bg-emerald-50 rounded-md p-2 border border-emerald-200">
-                                                    <p className="text-sm text-emerald-700 font-medium">
+                                                <div className="bg-emerald-50 rounded-md p-1.5 border border-emerald-200">
+                                                    <p className="text-xs text-emerald-700 font-medium">
                                                         🏷️ 标签: {record.label}
                                                     </p>
                                                 </div>
                                             )}
 
-                                            <div className="grid grid-cols-1 gap-2 text-sm">
-                                                <div className="flex items-center space-x-2">
+                                            <div className="grid grid-cols-2 gap-1 text-xs">
+                                                <div className="flex items-center space-x-1">
                                                     <span className="text-gray-500 font-medium">类型:</span>
                                                     <span className="text-gray-700">{record.elementType || 'unknown'}</span>
                                                 </div>
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center space-x-1">
                                                     <span className="text-gray-500 font-medium">标签:</span>
                                                     <span className="text-gray-700">{record.tagName || 'unknown'}</span>
                                                 </div>
                                                 {record.id && (
-                                                    <div className="flex items-center space-x-2">
+                                                    <div className="flex items-center space-x-1 col-span-2">
                                                         <span className="text-gray-500 font-medium">ID:</span>
                                                         <span className="text-gray-700 font-mono text-xs">{record.id}</span>
                                                     </div>
                                                 )}
                                                 {record.className && (
-                                                    <div className="flex items-center space-x-2">
+                                                    <div className="flex items-center space-x-1 col-span-2">
                                                         <span className="text-gray-500 font-medium">Class:</span>
                                                         <span className="text-gray-700 font-mono text-xs">{record.className}</span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="bg-gray-50 rounded-md p-2 border">
+                                            <div className="bg-gray-50 rounded-md p-1.5 border">
                                                 <p className="text-xs text-gray-600 font-mono break-all">
                                                     <span className="font-medium">选择器:</span> {record.selector}
                                                 </p>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             <div className="flex items-center justify-between w-full">
                                                 <div className="flex items-center space-x-2">
-                                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                                    <span className="font-bold text-blue-700 text-lg">
+                                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                    <span className="font-bold text-blue-700 text-base">
                                                         滚动操作
                                                     </span>
                                                 </div>
-                                                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                                                     #{index + 1}
                                                 </Badge>
                                             </div>
 
-                                            <div className="bg-white/70 rounded-md p-3 border border-blue-200">
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                                    <div className="flex items-center space-x-2">
+                                            <div className="bg-white/70 rounded-md p-2 border border-blue-200">
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div className="flex items-center space-x-1">
                                                         <span className="text-blue-600 font-medium">垂直位置:</span>
                                                         <span className="text-blue-800 font-mono">{record.scrollTop}px</span>
                                                     </div>
-                                                    <div className="flex items-center space-x-2">
+                                                    <div className="flex items-center space-x-1">
                                                         <span className="text-blue-600 font-medium">水平位置:</span>
                                                         <span className="text-blue-800 font-mono">{record.scrollLeft}px</span>
                                                     </div>
