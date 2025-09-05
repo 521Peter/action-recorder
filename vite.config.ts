@@ -35,7 +35,7 @@ export default defineConfig({
         chunkFileNames: "assets/[name]-[hash].js",
         entryFileNames: (chunkInfo) => {
           // Keep injected scripts in src/ directory with original names
-          if (chunkInfo.name === 'injected_script' || chunkInfo.name === 'injected_record_script') {
+          if (chunkInfo.name === 'injected_record_script') {
             return `src/${chunkInfo.name}.js`;
           }
           return "assets/[name]-[hash].js";
