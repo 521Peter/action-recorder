@@ -1,22 +1,9 @@
 import { useState, useEffect } from "react";
-import {
-    VStack,
-    HStack,
-    Button,
-    Text,
-    Box,
-    Heading,
-    Badge,
-    Divider,
-    useToast,
-    Card,
-    CardBody,
-    CardHeader,
-    Flex,
-    Icon,
-    Spacer,
-} from "@chakra-ui/react";
-import { FiPlay, FiSquare, FiTrash2, FiDownload } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { Play, Square, Trash2, Download } from "lucide-react";
 import { ClickRecord } from "../../types";
 
 /**
@@ -26,7 +13,7 @@ import { ClickRecord } from "../../types";
 function CodeGeneration() {
     const [isRecording, setIsRecording] = useState(false);
     const [records, setRecords] = useState<ClickRecord[]>([]);
-    const toast = useToast();
+    const { toast } = useToast();
 
     useEffect(() => {
         // 检查当前录制状态
@@ -59,18 +46,13 @@ function CodeGeneration() {
                 toast({
                     title: "开始录制",
                     description: "正在记录您的操作...",
-                    status: "success",
-                    duration: 2000,
-                    isClosable: true,
                 });
             }
         } catch (error) {
             toast({
                 title: "录制失败",
                 description: "无法开始录制，请刷新页面后重试",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
+                variant: "destructive",
             });
         }
     };
@@ -93,18 +75,13 @@ function CodeGeneration() {
                 toast({
                     title: "停止录制",
                     description: "录制已停止",
-                    status: "info",
-                    duration: 2000,
-                    isClosable: true,
                 });
             }
         } catch (error) {
             toast({
                 title: "停止失败",
                 description: "无法停止录制",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
+                variant: "destructive",
             });
         }
     };
@@ -114,9 +91,6 @@ function CodeGeneration() {
         setRecords([]);
         toast({
             title: "记录已清空",
-            status: "warning",
-            duration: 2000,
-            isClosable: true,
         });
     };
 
@@ -124,9 +98,6 @@ function CodeGeneration() {
         if (records.length === 0) {
             toast({
                 title: "无记录可导出",
-                status: "warning",
-                duration: 2000,
-                isClosable: true,
             });
             return;
         }
@@ -145,140 +116,139 @@ function CodeGeneration() {
         toast({
             title: "导出成功",
             description: "记录已导出到文件",
-            status: "success",
-            duration: 2000,
-            isClosable: true,
         });
     };
 
     return (
-        <VStack spacing={6} align="stretch">
-            <Heading size="lg" color="blue.600">
+        <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-primary">
                 操作录制器
-            </Heading>
+            </h1>
 
             {/* 录制控制区域 */}
             <Card>
-                <CardHeader pb={2}>
-                    <Heading size="md">录制控制</Heading>
+                <CardHeader>
+                    <CardTitle>录制控制</CardTitle>
                 </CardHeader>
-                <CardBody pt={2}>
-                    <VStack spacing={4}>
-                        {/* 主要录制按钮 */}
-                        <Button
-                            onClick={isRecording ? stopRecording : startRecording}
-                            colorScheme={isRecording ? "red" : "green"}
-                            size="lg"
-                            width="100%"
-                            leftIcon={<Icon as={isRecording ? FiSquare : FiPlay} />}
-                        >
-                            {isRecording ? "停止记录" : "开始记录"}
-                        </Button>
+                <CardContent className="space-y-4">
+                    {/* 主要录制按钮 */}
+                    <Button
+                        onClick={isRecording ? stopRecording : startRecording}
+                        variant={isRecording ? "destructive" : "default"}
+                        size="lg"
+                        className="w-full"
+                    >
+                        {isRecording ? (
+                            <>
+                                <Square className="mr-2 h-4 w-4" />
+                                停止记录
+                            </>
+                        ) : (
+                            <>
+                                <Play className="mr-2 h-4 w-4" />
+                                开始记录
+                            </>
+                        )}
+                    </Button>
 
-                        {/* 操作按钮组 */}
-                        <HStack spacing={3} width="100%">
-                            <Button
-                                onClick={clearRecords}
-                                colorScheme="orange"
-                                variant="outline"
-                                leftIcon={<Icon as={FiTrash2} />}
-                                flex={1}
-                            >
-                                清空记录
-                            </Button>
-                            <Button
-                                onClick={exportRecords}
-                                colorScheme="blue"
-                                variant="outline"
-                                leftIcon={<Icon as={FiDownload} />}
-                                isDisabled={records.length === 0}
-                                flex={1}
-                            >
-                                导出记录
-                            </Button>
-                        </HStack>
-                    </VStack>
-                </CardBody>
+                    {/* 操作按钮组 */}
+                    <div className="flex gap-3">
+                        <Button
+                            onClick={clearRecords}
+                            variant="outline"
+                            className="flex-1"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            清空记录
+                        </Button>
+                        <Button
+                            onClick={exportRecords}
+                            variant="outline"
+                            disabled={records.length === 0}
+                            className="flex-1"
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            导出记录
+                        </Button>
+                    </div>
+                </CardContent>
             </Card>
 
             {/* 记录统计 */}
             <Card>
-                <CardBody>
-                    <Flex align="center">
-                        <Text fontSize="lg" fontWeight="semibold">
+                <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                        <span className="text-lg font-semibold">
                             记录统计
-                        </Text>
-                        <Spacer />
-                        <Badge colorScheme="blue" fontSize="md" px={3} py={1}>
+                        </span>
+                        <Badge variant="default" className="text-sm px-3 py-1">
                             {records.length} 条记录
                         </Badge>
-                    </Flex>
-                </CardBody>
+                    </div>
+                </CardContent>
             </Card>
 
             {/* 记录列表 */}
             {records.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <Heading size="md">操作记录</Heading>
+                        <CardTitle>操作记录</CardTitle>
                     </CardHeader>
-                    <CardBody>
-                        <VStack spacing={3} maxH="400px" overflowY="auto">
+                    <CardContent>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
                             {records.map((record, index) => (
-                                <Box
+                                <div
                                     key={index}
-                                    p={4}
-                                    border="1px"
-                                    borderColor="gray.200"
-                                    borderRadius="md"
-                                    width="100%"
-                                    bg={record.type === 'scroll' ? "blue.50" : "white"}
+                                    className={`p-4 border rounded-md w-full ${record.type === 'scroll'
+                                            ? "bg-blue-50 border-blue-200"
+                                            : "bg-white border-gray-200"
+                                        }`}
                                 >
                                     {record.type === 'click' ? (
-                                        <VStack align="start" spacing={2}>
-                                            <Flex align="center" width="100%">
-                                                <Text fontWeight="bold" color="blue.600">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center w-full">
+                                                <span className="font-bold text-primary">
                                                     点击: {record.text || record.label || '无文本'}
-                                                </Text>
-                                            </Flex>
+                                                </span>
+                                            </div>
 
                                             {record.label && (
-                                                <Text fontSize="sm" color="green.600">
+                                                <p className="text-sm text-green-600">
                                                     🏷️ 标签: {record.label}
-                                                </Text>
+                                                </p>
                                             )}
 
-                                            <Text fontSize="sm" color="gray.600">
+                                            <p className="text-sm text-muted-foreground">
                                                 类型: {record.elementType || 'unknown'} |
                                                 标签: {record.tagName || 'unknown'}
                                                 {record.id && ` | ID: ${record.id}`}
                                                 {record.className && ` | Class: ${record.className}`}
-                                            </Text>
+                                            </p>
 
-                                            <Text fontSize="xs" color="gray.500" fontFamily="mono">
+                                            <p className="text-xs text-muted-foreground font-mono">
                                                 选择器: {record.selector}
-                                            </Text>
-                                        </VStack>
+                                            </p>
+                                        </div>
                                     ) : (
-                                        <VStack align="start" spacing={2}>
-                                            <Flex align="center" width="100%">
-                                                <Text fontWeight="bold" color="orange.600">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center w-full">
+                                                <span className="font-bold text-orange-600">
                                                     滚动操作
-                                                </Text>
-                                            </Flex>
+                                                </span>
+                                            </div>
 
-                                            <Text fontSize="sm" color="gray.600">
+                                            <p className="text-sm text-muted-foreground">
                                                 位置: Y={record.scrollTop}, X={record.scrollLeft}
-                                            </Text>
-                                        </VStack>
+                                            </p>
+                                        </div>
                                     )}
-                                </Box>
+                                </div>
                             ))}
-                        </VStack>
-                    </CardBody>
+                        </div>
+                    </CardContent>
                 </Card>
             )}
-        </VStack>
+        </div>
     );
 }
 

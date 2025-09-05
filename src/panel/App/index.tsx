@@ -1,44 +1,33 @@
-import {
-  Box,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toaster } from "@/components/ui/toaster";
 import CodeGeneration from "../CodeGeneration";
 import Debug from "../Debug";
-import { ToastProvider } from '../../components/ToastProvider';
 
 /**
  * 面板主应用组件
  * 使用Tabs组织不同功能模块
  */
 function App() {
-  // 背景颜色
-  const bgColor = useColorModeValue("gray.50", "gray.900");
-
   return (
-    <ToastProvider>
-      <Box bg={bgColor} minH="100vh" p={4}>
-        <Tabs variant="enclosed" colorScheme="blue">
-          <TabList>
-            <Tab>生成代码</Tab>
-            <Tab>调试</Tab>
-          </TabList>
+    <>
+      <div className="min-h-screen bg-background p-4">
+        <Tabs defaultValue="generation" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="generation">生成代码</TabsTrigger>
+            <TabsTrigger value="debug">调试</TabsTrigger>
+          </TabsList>
 
-          <TabPanels>
-            <TabPanel p={4}>
-              <CodeGeneration />
-            </TabPanel>
-            <TabPanel p={4}>
-              <Debug />
-            </TabPanel>
-          </TabPanels>
+          <TabsContent value="generation" className="mt-4">
+            <CodeGeneration />
+          </TabsContent>
+
+          <TabsContent value="debug" className="mt-4">
+            <Debug />
+          </TabsContent>
         </Tabs>
-      </Box>
-    </ToastProvider>
+      </div>
+      <Toaster />
+    </>
   );
 }
 

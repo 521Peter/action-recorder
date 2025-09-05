@@ -1,19 +1,21 @@
-import {
-  Box,
-  Text,
-  VStack,
-  HStack,
-  Textarea,
-  Button,
-  useColorModeValue,
-  IconButton,
-  Tooltip,
-  ButtonGroup,
-} from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { showToast } from "@/utils/toastManager";
-import { FaSave, FaTrash, FaPlay, FaRedo, FaCode } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Save, Trash, Play, RotateCcw, Code } from "lucide-react";
 import { removeComments } from "@/utils/scriptInjector";
+
+// 创建简化的 toast 函数
+const showToast = {
+  success: (message: string) => {
+    // 这里可以使用 useToast hook，但为了简化，我们先用一个简单的实现
+    console.log('Success:', message);
+  },
+  error: (message: string) => {
+    console.log('Error:', message);
+  }
+};
 
 /**
  * 脚本注入器组件
@@ -22,10 +24,7 @@ import { removeComments } from "@/utils/scriptInjector";
 function Debug() {
   const [customCode, setCustomCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const bgColor = useColorModeValue("white", "gray.800");
-  const borderColor = useColorModeValue("gray.200", "gray.600");
-  const textColor = useColorModeValue("gray.600", "gray.300");
+  const { toast } = useToast();
 
   // 加载已保存的脚本
   useEffect(() => {
@@ -37,15 +36,21 @@ function Debug() {
   }, []);
 
   // 保存脚本
-  const handleSaveScript = async() => {
+  const handleSaveScript = async () => {
     const code = customCode.trim();
     if (!code) {
-      showToast.error("请输入脚本代码");
+      toast({
+        title: "请输入脚本代码",
+        variant: "destructive",
+      });
       return;
     }
 
     chrome.storage.local.set({ customScript: code }, () => {
-      showToast.success("脚本已保存，将在所有网站自动执行");
+      toast({
+        title: "脚本已保存",
+        description: "将在所有网站自动执行",
+      });
     });
   };
 
@@ -54,7 +59,9 @@ function Debug() {
     if (confirm("确定要删除脚本吗？")) {
       chrome.storage.local.remove("customScript", () => {
         setCustomCode("");
-        showToast.success("脚本已删除");
+        toast({
+          title: "脚本已删除",
+        });
       });
     }
   };
@@ -63,7 +70,10 @@ function Debug() {
   const handleTestScript = async () => {
     const code = customCode.trim();
     if (!code) {
-      showToast.error("请先输入脚本代码");
+      toast({
+        title: "请先输入脚本代码",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -78,7 +88,10 @@ function Debug() {
       });
 
       if (!tab.id) {
-        showToast.error("无法获取标签页ID");
+        toast({
+          title: "无法获取标签页ID",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -109,15 +122,28 @@ function Debug() {
       if (results && results[0] && results[0].result) {
         const { success, result, error } = results[0].result;
         if (success) {
-          showToast.success(`${result}`);
+          toast({
+            title: "执行成功",
+            description: result,
+          });
         } else {
-          showToast.error(`${error}`);
+          toast({
+            title: "执行失败",
+            description: error,
+            variant: "destructive",
+          });
         }
       } else {
-        showToast.success("脚本测试执行完成");
+        toast({
+          title: "脚本测试执行完成",
+        });
       }
     } catch (error) {
-      showToast.error(`测试失败: ${(error as Error).message}`);
+      toast({
+        title: "测试失败",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -133,125 +159,117 @@ function Debug() {
       if (tab.id && tab.url) {
         const url = new URL(tab.url);
         const origin = url.origin;
-        
+
         // 清除当前网站的所有数据
         const response = await chrome.runtime.sendMessage({
           action: "clearSiteData",
           origin: origin
         });
-        
+
         if (response && response.success) {
           // 刷新页面
           chrome.tabs.reload(tab.id);
         } else {
-          showToast.error(`清除网站数据失败: ${response?.error || '未知错误'}`);
+          toast({
+            title: "清除网站数据失败",
+            description: response?.error || '未知错误',
+            variant: "destructive",
+          });
         }
       } else {
-        showToast.error("无法获取标签页信息");
+        toast({
+          title: "无法获取标签页信息",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      showToast.error(`刷新失败: ${(error as Error).message}`);
+      toast({
+        title: "刷新失败",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <VStack spacing={6} align="stretch">
+    <div className="space-y-6">
       {/* 脚本代码编辑区域 */}
-      <Box
-        p={4}
-        borderRadius="md"
-        bg={bgColor}
-        border="1px"
-        borderColor={borderColor}
-      >
-        <HStack justify="space-between" align="center" mb={3}>
-          <HStack>
-            <FaCode color={useColorModeValue("#4A5568", "#A0AEC0")} />
-            <Text fontSize="lg" fontWeight="bold" color={textColor}>
-              脚本代码
-            </Text>
-          </HStack>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>脚本代码</CardTitle>
+            </div>
 
-          {/* 测试和刷新按钮组 */}
-          <ButtonGroup size="sm" isAttached variant="outline">
-            <Tooltip label="测试脚本" hasArrow>
-              <IconButton
-                aria-label="测试脚本"
-                icon={<FaPlay />}
-                colorScheme="green"
+            {/* 测试和刷新按钮组 */}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={handleTestScript}
-                isLoading={isLoading}
-              />
-            </Tooltip>
-            <Tooltip label="刷新页面" hasArrow>
-              <IconButton
-                aria-label="刷新页面"
-                icon={<FaRedo />}
-                colorScheme="gray"
+                disabled={isLoading}
+              >
+                <Play className="h-4 w-4 mr-1" />
+                测试脚本
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={handleReloadPage}
-              />
-            </Tooltip>
-          </ButtonGroup>
-        </HStack>
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                刷新页面
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
 
-        <Textarea
-          value={customCode}
-          onChange={(e) => setCustomCode(e.target.value)}
-          placeholder="在此输入您的 JavaScript 代码..."
-          height="350px"
-          fontFamily="monospace"
-          fontSize="sm"
-          resize="vertical"
-          mb={3}
-        />
+        <CardContent className="space-y-4">
+          <Textarea
+            value={customCode}
+            onChange={(e) => setCustomCode(e.target.value)}
+            placeholder="在此输入您的 JavaScript 代码..."
+            className="min-h-[350px] font-mono text-sm resize-y"
+          />
 
-        {/* 保存和删除按钮 */}
-        <HStack spacing={2}>
-          <Button
-            leftIcon={<FaSave />}
-            colorScheme="blue"
-            onClick={handleSaveScript}
-            size="sm"
-          >
-            保存脚本
-          </Button>
-          <Button
-            leftIcon={<FaTrash />}
-            colorScheme="red"
-            variant="outline"
-            onClick={handleDeleteScript}
-            size="sm"
-          >
-            删除脚本
-          </Button>
-        </HStack>
-      </Box>
+          {/* 保存和删除按钮 */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSaveScript}
+              size="sm"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              保存脚本
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDeleteScript}
+              size="sm"
+            >
+              <Trash className="h-4 w-4 mr-1" />
+              删除脚本
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 使用说明 */}
-      <Box
-        p={4}
-        borderRadius="md"
-        bg={useColorModeValue("gray.50", "gray.700")}
-      >
-        <Text fontSize="sm" color={textColor}>
-          <strong>使用说明：</strong>
-          <br />
-          • 在文本框中输入 JavaScript 代码
-          <br />
-          • 点击 <FaSave style={{ display: "inline", margin: "0 2px" }} />{" "}
-          保存脚本到本地存储
-          <br />
-          • 点击 <FaPlay style={{ display: "inline", margin: "0 2px" }} />{" "}
-          在当前页面测试脚本
-          <br />
-          • 点击 <FaRedo style={{ display: "inline", margin: "0 2px" }} />{" "}
-          清除当前页面缓存并刷新
-          <br />
-          • 点击 <FaTrash style={{ display: "inline", margin: "0 2px" }} />{" "}
-          删除已保存的脚本
-        </Text>
-      </Box>
-    </VStack>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p className="font-semibold">使用说明：</p>
+            <ul className="space-y-1 ml-4">
+              <li>• 在文本框中输入 JavaScript 代码</li>
+              <li>• 点击 <Save className="inline h-3 w-3 mx-1" /> 保存脚本到本地存储</li>
+              <li>• 点击 <Play className="inline h-3 w-3 mx-1" /> 在当前页面测试脚本</li>
+              <li>• 点击 <RotateCcw className="inline h-3 w-3 mx-1" /> 清除当前页面缓存并刷新</li>
+              <li>• 点击 <Trash className="inline h-3 w-3 mx-1" /> 删除已保存的脚本</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

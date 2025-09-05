@@ -1,16 +1,14 @@
 import React from "react";
-import { IconButton, Tooltip, IconButtonProps } from "@chakra-ui/react";
-import { FiTarget } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface ElementLocatorProps
-  extends Omit<IconButtonProps, "icon" | "aria-label"> {
+interface ElementLocatorProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   selector: string;
   parentSelector?: string; // 父表单的选择器，如果元素在表单中
   iframeIndex?: number; // iframe索引，如果元素在iframe中
-  size?: string;
-  variant?: string;
-  colorScheme?: string;
-  tooltipPlacement?: "top" | "bottom" | "left" | "right";
+  size?: "default" | "sm" | "lg" | "icon";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 /**
@@ -23,8 +21,7 @@ const ElementLocator: React.FC<ElementLocatorProps> = ({
   iframeIndex,
   size = "sm",
   variant = "ghost",
-  colorScheme = "blue",
-  tooltipPlacement = "top",
+  className,
   ...rest
 }) => {
   const handleTestSelector = () => {
@@ -49,18 +46,17 @@ const ElementLocator: React.FC<ElementLocatorProps> = ({
   };
 
   return (
-    <Tooltip label="在页面中定位此元素" placement={tooltipPlacement}>
-      <IconButton
-        icon={<FiTarget />}
-        size={size}
-        variant={variant}
-        colorScheme={colorScheme}
-        onClick={handleTestSelector}
-        aria-label="定位元素"
-        isDisabled={!selector}
-        {...rest}
-      />
-    </Tooltip>
+    <Button
+      size={size}
+      variant={variant}
+      onClick={handleTestSelector}
+      disabled={!selector}
+      className={cn("p-2", className)}
+      title="在页面中定位此元素"
+      {...rest}
+    >
+      <Target className="h-4 w-4" />
+    </Button>
   );
 };
 

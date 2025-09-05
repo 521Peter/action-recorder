@@ -1,35 +1,29 @@
 import React from "react";
-import { Box, Tooltip, BoxProps } from "@chakra-ui/react";
-import { FiMove } from "react-icons/fi";
+import { Move } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DragHandleProps {
-  dragHandleBg?: string;
+  className?: string;
 }
 
 /**
  * 拖拽句柄组件
  */
 const DragHandle: React.FC<DragHandleProps> = ({
-  dragHandleBg = "gray.100",
+  className,
 }) => (
-  <Tooltip label="拖拽调整顺序" placement="top">
-    <Box
-      as="span"
-      cursor="grab"
-      p={1}
-      borderRadius="md"
-      bg={dragHandleBg}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      _active={{ cursor: "grabbing" }}
-    >
-      <FiMove />
-    </Box>
-  </Tooltip>
+  <span
+    className={cn(
+      "cursor-grab p-1 rounded-md bg-muted flex items-center justify-center active:cursor-grabbing",
+      className
+    )}
+    title="拖拽调整顺序"
+  >
+    <Move className="h-4 w-4" />
+  </span>
 );
 
-interface DraggableItemProps {
+interface DraggableItemProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'onDragStart' | 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop' | 'onDragEnd'> {
   index: number;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
@@ -37,11 +31,9 @@ interface DraggableItemProps {
   onDragLeave?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
-  style?: Record<string, any>;
   children: (dragHandle: React.ReactNode) => React.ReactNode;
   showDragHandle?: boolean;
-  dragHandleBg?: string;
-  [key: string]: any;
+  dragHandleClassName?: string;
 }
 
 /**
@@ -56,10 +48,11 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   onDragLeave,
   onDrop,
   onDragEnd,
-  style,
   children,
   showDragHandle = true,
-  dragHandleBg,
+  dragHandleClassName,
+  className,
+  style,
   ...rest
 }) => {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) =>
@@ -72,7 +65,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     onDrop && onDrop(e, index);
 
   return (
-    <Box
+    <div
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -80,14 +73,14 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
       onDragLeave={onDragLeave}
       onDrop={handleDrop}
       onDragEnd={onDragEnd}
-      position="relative"
-      sx={style}
+      className={cn("relative", className)}
+      style={style}
       {...rest}
     >
       {children(
-        showDragHandle ? <DragHandle dragHandleBg={dragHandleBg} /> : null
+        showDragHandle ? <DragHandle className={dragHandleClassName} /> : null
       )}
-    </Box>
+    </div>
   );
 };
 
