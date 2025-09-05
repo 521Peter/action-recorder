@@ -156,6 +156,7 @@ function startRecording() {
   // 注入脚本到页面中
   const script = document.createElement('script')
   script.src = chrome.runtime.getURL('src/injected_record_script.js')
+  script.type = 'module'
   script.onload = function () {
     // 脚本加载完成后，向页面发送开始录制消息
     window.postMessage({ type: 'START_RECORDING' }, '*')
