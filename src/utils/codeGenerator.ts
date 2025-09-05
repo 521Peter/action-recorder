@@ -176,9 +176,9 @@ export const generateTaskCode = (config: TaskConfig) => {
   const successCode = config.successSelector
     ? isIframe
       ? templates.iframeSuccessHandling(
-          config.successSelector,
-          config.successText
-        )
+        config.successSelector,
+        config.successText
+      )
       : templates.successHandling(config.successSelector, config.successText)
     : "";
 
@@ -189,10 +189,10 @@ export const generateTaskCode = (config: TaskConfig) => {
   // 根据是否有iframe选择器来决定使用哪种form检查方式
   const formCheckCode = isIframe
     ? templates.iframeFormCheck(
-        config.iframeSelector!,
-        config.formSelector,
-        formBody
-      )
+      config.iframeSelector!,
+      config.formSelector,
+      formBody
+    )
     : templates.formCheck(config.formSelector, formBody);
 
   const finalCode = templates.taskWrapper(pathname, formCheckCode);
@@ -280,20 +280,6 @@ const generateNodeOperation = (
       return `${waitTimeStr}\nsteamBack.setValue(${targetExpr}, steamBack.generatorApi.generateState(),true);`;
     case FormElementType.ADDRESS:
       return `${waitTimeStr}\nsteamBack.setValue(${targetExpr}, user.address1 || steamBack.generatorApi.generateAddress(),true);`;
-    case FormElementType.LINKS:
-      const selectorQuery = isIframe
-        ? `iframeDoc.querySelectorAll(\`${node.selector}\`)`
-        : `document.querySelectorAll(\`${node.selector}\`)`;
-      const actions = [
-        `const links = ${selectorQuery};`,
-        `const link = steamBack.generatorApi.getRandomElement(links);`,
-        `await steamBack.scrollToWithPromise(link);`,
-        `await steamBack.wait(800);`,
-        `steamBack.createClick(link);`,
-      ];
-      return actions.join("\n");
-    case FormElementType.FILE:
-      return `await steamBack.generatorApi.fileUpload(${targetExpr});`;
     default:
       return `// 未知类型: ${node.type}`;
   }

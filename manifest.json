@@ -34,7 +34,11 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["images/*", "src/injected_script.js"],
+      "resources": [
+        "images/*",
+        "src/injected_script.js",
+        "src/injected_record_script.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

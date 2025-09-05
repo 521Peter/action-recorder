@@ -134,3 +134,105 @@ if (window.self === window.top) {
   const injector = new ScriptInjector();
   injector.initializeWithMultipleTiming();
 }
+
+
+// Content Script - 在网页中运行，负责与页面通信
+let isRecording = false
+
+// 监听来自 popup 的消息
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === 'startRecording') {
+    startRecording()
+    sendResponse({ success: true })
+  } else if (message.action === 'stopRecording') {
+    stopRecording()
+    sendResponse({ success: true })
+  }
+})
+
+function startRecording() {
+  isRecording = true
+
+  // 注入脚本到页面中
+  const script = document.createElement('script')
+  script.src = chrome.runtime.getURL('src/injected_record_script.js')
+  script.onload = function () {
+    // 脚本加载完成后，向页面发送开始录制消息
+    window.postMessage({ type: 'START_RECORDING' }, '*')
+  }
+  document.head.appendChild(script)
+
+  // 监听来自注入脚本的消息
+  window.addEventListener('message', handlePageMessage)
+
+  console.log('开始记录点击事件')
+}
+
+function stopRecording() {
+  isRecording = false
+
+  // 向页面发送停止录制消息
+  window.postMessage({ type: 'STOP_RECORDING' }, '*')
+
+  // 移除消息监听器
+  window.removeEventListener('message', handlePageMessage)
+
+  console.log('停止记录点击事件')
+}
+
+function handlePageMessage(event: MessageEvent) {
+  // 只处理来自同一窗口的消息
+  if (event.source !== window) return
+
+  // 如果没有在录制，忽略消息
+  if (!isRecording) return
+
+  if (event.data.type === 'ELEMENT_CLICKED') {
+    const clickData = event.data.data
+
+    // 保存点击记录到 Chrome 存储
+    chrome.storage.local.get(['clickRecords'], (result) => {
+      const records = result.clickRecords || []
+      records.push({
+        type: 'click',
+        selector: clickData.selector,
+        text: clickData.text,
+        tagName: clickData.tagName,
+        className: clickData.className,
+        id: clickData.id,
+        elementType: clickData.elementType,
+        label: clickData.label,
+        formSelector: clickData.formSelector,
+        url: window.location.href
+      })
+
+      chrome.storage.local.set({ clickRecords: records })
+    })
+
+    console.log('记录点击:', clickData)
+  } else if (event.data.type === 'SCROLL_DETECTED') {
+    const scrollData = event.data.data
+
+    // 保存滚动记录到 Chrome 存储
+    chrome.storage.local.get(['clickRecords'], (result) => {
+      const records = result.clickRecords || []
+      records.push({
+        type: 'scroll',
+        scrollTop: scrollData.scrollTop,
+        scrollLeft: scrollData.scrollLeft,
+        url: window.location.href
+      })
+
+      chrome.storage.local.set({ clickRecords: records })
+    })
+
+    console.log('记录滚动:', scrollData)
+  }
+}
+
+// 页面加载时检查是否正在录制
+chrome.storage.local.get(['isRecording'], (result) => {
+  if (result.isRecording) {
+    startRecording()
+  }
+})

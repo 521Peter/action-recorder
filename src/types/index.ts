@@ -1,7 +1,6 @@
 // 表单元素类型枚举
 export enum FormElementType {
   OPTIONS = "options",
-  LINKS = "links",
   EMAIL = "email",
   TEXT = "text",
   CLICK = "click",
@@ -17,7 +16,6 @@ export enum FormElementType {
   CITY = "city",
   STATE = "state",
   ADDRESS = "address",
-  FILE = "file",
 }
 
 // 任务节点接口
@@ -37,4 +35,20 @@ export interface TaskConfig {
   successSelector?: string; // 成功选择器
   successText?: string; // 成功文本
   iframeSelector?: string;
+}
+
+// 点击记录接口
+export interface ClickRecord {
+  type: 'click' | 'scroll'
+  selector?: string
+  text?: string
+  tagName?: string
+  className?: string
+  id?: string
+  elementType?: FormElementType
+  label?: string
+  formSelector?: string | null
+  scrollTop?: number
+  scrollLeft?: number
+  url: string
 }

@@ -28,10 +28,18 @@ export default defineConfig({
     rollupOptions: {
       input: {
         panel: resolve(__dirname, "src/panel/panel.html"),
+        injected_script: resolve(__dirname, "src/injected_script.js"),
+        injected_record_script: resolve(__dirname, "src/injected_record_script.ts"),
       },
       output: {
         chunkFileNames: "assets/[name]-[hash].js",
-        entryFileNames: "assets/[name]-[hash].js",
+        entryFileNames: (chunkInfo) => {
+          // Keep injected scripts in src/ directory with original names
+          if (chunkInfo.name === 'injected_script' || chunkInfo.name === 'injected_record_script') {
+            return `src/${chunkInfo.name}.js`;
+          }
+          return "assets/[name]-[hash].js";
+        },
         assetFileNames: "assets/[name]-[hash].[ext]",
       },
     },
