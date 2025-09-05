@@ -1,22 +1,9 @@
-import { FormElementParser } from "./utils/formElementParser.ts";
 import { generateUniqueSelector } from "./utils/genSelector.ts";
 import { ElementHighlighter } from "./utils/elementHighlighter.ts";
 import { ScriptInjector } from "./utils/scriptInjector.ts";
 
-// 初始化表单元素解析器
-const formParser = new FormElementParser();
-
 // 创建全局高亮器实例
 const elementHighlighter = new ElementHighlighter();
-
-// 确保DOM加载完成后再初始化
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => {
-    formParser.init();
-  });
-} else {
-  formParser.init();
-}
 
 // 保存当前右键点击的元素
 let clickedElement: Element | null = null;
@@ -104,10 +91,7 @@ interface ChromeMessage {
 chrome.runtime.onMessage.addListener(
   (message: ChromeMessage, _sender, sendResponse) => {
     console.log('Content: 收到消息', message);
-    if (message.action === "getFormElements") {
-      formParser.parseFormElements(); // 重新解析
-      sendResponse({ success: true });
-    } else if (message.action === "testSelector" && message.selector) {
+    if (message.action === "testSelector" && message.selector) {
       // 处理测试选择器请求
       console.log('Content: 开始处理testSelector', {
         selector: message.selector,

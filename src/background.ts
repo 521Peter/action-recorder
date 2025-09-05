@@ -1,42 +1,11 @@
-import { FormGroups } from "./types";
-
-// 存储从内容脚本收集的表单元素
-let formElements: FormGroups = {
-  forms: {},
-};
-let totalElements = 0;
-
 interface FormElementsMessage {
   action: string;
-  formElements?: FormGroups;
-  totalElements?: number;
   origin: string;
 }
 
 // 监听来自内容脚本的消息
 chrome.runtime.onMessage.addListener(
   (message: FormElementsMessage, sender, sendResponse) => {
-    if (message.action === "formElementsUpdated" && message.formElements) {
-      formElements = message.formElements;
-      totalElements = message.totalElements || 0;
-
-      // 保存到存储中，以便侧边栏页面可以访问
-      chrome.storage.local.set(
-        { formElements: formElements, totalElements: totalElements },
-        () => {
-          console.log(
-            "表单元素已更新，共计",
-            totalElements,
-            "个元素",
-            formElements
-          );
-        }
-      );
-
-      // 更新扩展图标上的徽章，显示找到的表单元素数量
-      updateBadge(totalElements);
-    }
-
     // 处理清除网站数据的请求
     if (message.action === "clearSiteData" && message.origin) {
       handleClearSiteData(message.origin)
@@ -52,16 +21,6 @@ chrome.runtime.onMessage.addListener(
     return true;
   }
 );
-
-// 更新扩展图标上的徽章
-function updateBadge(count: number): void {
-  if (count > 0) {
-    chrome.action.setBadgeText({ text: count.toString() });
-    chrome.action.setBadgeBackgroundColor({ color: "#4CAF50" });
-  } else {
-    chrome.action.setBadgeText({ text: "" });
-  }
-}
 
 // 清除网站数据
 async function handleClearSiteData(origin: string): Promise<void> {
@@ -97,14 +56,6 @@ function safelySendMessage(tabId: number, message: any): void {
     console.log("发送消息异常:", error);
   }
 }
-
-// 当用户切换标签页时，重新获取当前页面的表单元素
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  // 等待更长时间，确保内容脚本完全加载
-  setTimeout(() => {
-    safelySendMessage(activeInfo.tabId, { action: "getFormElements" });
-  }, 1000); // 延长到1000ms
-});
 
 // 当标签页刷新或导航到新页面时
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
