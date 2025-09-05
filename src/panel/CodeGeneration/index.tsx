@@ -44,13 +44,14 @@ function CodeGeneration() {
                 setIsRecording(true);
 
                 toast({
-                    title: "开始录制",
+                    title: "🎬 开始录制",
                     description: "正在记录您的操作...",
+                    variant: "success",
                 });
             }
         } catch (error) {
             toast({
-                title: "录制失败",
+                title: "❌ 录制失败",
                 description: "无法开始录制，请刷新页面后重试",
                 variant: "destructive",
             });
@@ -73,13 +74,14 @@ function CodeGeneration() {
                 loadRecords();
 
                 toast({
-                    title: "停止录制",
+                    title: "⏹️ 停止录制",
                     description: "录制已停止",
+                    variant: "info",
                 });
             }
         } catch (error) {
             toast({
-                title: "停止失败",
+                title: "❌ 停止失败",
                 description: "无法停止录制",
                 variant: "destructive",
             });
@@ -90,14 +92,18 @@ function CodeGeneration() {
         chrome.storage.local.set({ clickRecords: [] });
         setRecords([]);
         toast({
-            title: "记录已清空",
+            title: "🗑️ 记录已清空",
+            description: "所有操作记录已被删除",
+            variant: "warning",
         });
     };
 
     const exportRecords = () => {
         if (records.length === 0) {
             toast({
-                title: "无记录可导出",
+                title: "⚠️ 无记录可导出",
+                description: "请先录制一些操作",
+                variant: "warning",
             });
             return;
         }
@@ -114,34 +120,46 @@ function CodeGeneration() {
         URL.revokeObjectURL(url);
 
         toast({
-            title: "导出成功",
+            title: "✅ 导出成功",
             description: "记录已导出到文件",
+            variant: "success",
         });
     };
 
     return (
         <div className="space-y-6">
             {/* 录制控制区域 */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>录制控制</CardTitle>
+            <Card className="border-2 border-gray-200 shadow-sm">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                    <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                        <CardTitle className="text-lg font-semibold text-gray-800">录制控制</CardTitle>
+                        {isRecording && (
+                            <Badge variant="destructive" className="animate-pulse">
+                                录制中
+                            </Badge>
+                        )}
+                    </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                     {/* 主要录制按钮 */}
                     <Button
                         onClick={isRecording ? stopRecording : startRecording}
                         variant={isRecording ? "destructive" : "default"}
                         size="lg"
-                        className="w-full"
+                        className={`w-full transition-all duration-200 ${isRecording
+                            ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
+                            : 'bg-green-500 hover:bg-green-600 shadow-green-200'
+                            } shadow-lg`}
                     >
                         {isRecording ? (
                             <>
-                                <Square className="mr-2 h-4 w-4" />
+                                <Square className="mr-2 h-5 w-5" />
                                 停止记录
                             </>
                         ) : (
                             <>
-                                <Play className="mr-2 h-4 w-4" />
+                                <Play className="mr-2 h-5 w-5" />
                                 开始记录
                             </>
                         )}
@@ -152,7 +170,7 @@ function CodeGeneration() {
                         <Button
                             onClick={clearRecords}
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
                             清空记录
@@ -161,7 +179,7 @@ function CodeGeneration() {
                             onClick={exportRecords}
                             variant="outline"
                             disabled={records.length === 0}
-                            className="flex-1"
+                            className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download className="mr-2 h-4 w-4" />
                             导出记录
@@ -172,61 +190,111 @@ function CodeGeneration() {
 
             {/* 记录列表 */}
             {records.length > 0 && (
-                <Card>
-                    <CardHeader>
+                <Card className="border-2 border-gray-200 shadow-sm">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
                         <div className="flex items-center justify-between">
-                            <CardTitle>操作记录</CardTitle>
-                            <Badge variant="default" className="text-sm px-3 py-1">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <CardTitle className="text-lg font-semibold text-gray-800">操作记录</CardTitle>
+                            </div>
+                            <Badge variant="default" className="text-sm px-3 py-1 bg-blue-100 text-blue-800 border-blue-200">
                                 {records.length} 条记录
                             </Badge>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto">
                             {records.map((record, index) => (
                                 <div
                                     key={index}
-                                    className={`p-4 border rounded-md w-full ${record.type === 'scroll'
-                                        ? "bg-blue-50 border-blue-200"
-                                        : "bg-white border-gray-200"
+                                    className={`p-6 border rounded-lg w-full transition-all duration-200 hover:shadow-md ${record.type === 'scroll'
+                                        ? "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-300 hover:border-blue-400"
+                                        : "bg-gradient-to-r from-green-50 to-green-100 border-green-300 hover:border-green-400"
                                         }`}
                                 >
                                     {record.type === 'click' ? (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center w-full">
-                                                <span className="font-bold text-primary">
-                                                    点击: {record.text || record.label || '无文本'}
-                                                </span>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between w-full">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                                    <span className="font-bold text-green-700 text-lg">
+                                                        点击操作
+                                                    </span>
+                                                </div>
+                                                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                                    #{index + 1}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="bg-white/70 rounded-md p-3 border border-green-200">
+                                                <p className="font-medium text-green-800">
+                                                    📍 {record.text || record.label || '无文本'}
+                                                </p>
                                             </div>
 
                                             {record.label && (
-                                                <p className="text-sm text-green-600">
-                                                    🏷️ 标签: {record.label}
-                                                </p>
+                                                <div className="bg-emerald-50 rounded-md p-2 border border-emerald-200">
+                                                    <p className="text-sm text-emerald-700 font-medium">
+                                                        🏷️ 标签: {record.label}
+                                                    </p>
+                                                </div>
                                             )}
 
-                                            <p className="text-sm text-muted-foreground">
-                                                类型: {record.elementType || 'unknown'} |
-                                                标签: {record.tagName || 'unknown'}
-                                                {record.id && ` | ID: ${record.id}`}
-                                                {record.className && ` | Class: ${record.className}`}
-                                            </p>
-
-                                            <p className="text-xs text-muted-foreground font-mono">
-                                                选择器: {record.selector}
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center w-full">
-                                                <span className="font-bold text-orange-600">
-                                                    滚动操作
-                                                </span>
+                                            <div className="grid grid-cols-1 gap-2 text-sm">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-gray-500 font-medium">类型:</span>
+                                                    <span className="text-gray-700">{record.elementType || 'unknown'}</span>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="text-gray-500 font-medium">标签:</span>
+                                                    <span className="text-gray-700">{record.tagName || 'unknown'}</span>
+                                                </div>
+                                                {record.id && (
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-gray-500 font-medium">ID:</span>
+                                                        <span className="text-gray-700 font-mono text-xs">{record.id}</span>
+                                                    </div>
+                                                )}
+                                                {record.className && (
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-gray-500 font-medium">Class:</span>
+                                                        <span className="text-gray-700 font-mono text-xs">{record.className}</span>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <p className="text-sm text-muted-foreground">
-                                                位置: Y={record.scrollTop}, X={record.scrollLeft}
-                                            </p>
+                                            <div className="bg-gray-50 rounded-md p-2 border">
+                                                <p className="text-xs text-gray-600 font-mono break-all">
+                                                    <span className="font-medium">选择器:</span> {record.selector}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between w-full">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                                    <span className="font-bold text-blue-700 text-lg">
+                                                        滚动操作
+                                                    </span>
+                                                </div>
+                                                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                                                    #{index + 1}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="bg-white/70 rounded-md p-3 border border-blue-200">
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-blue-600 font-medium">垂直位置:</span>
+                                                        <span className="text-blue-800 font-mono">{record.scrollTop}px</span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-blue-600 font-medium">水平位置:</span>
+                                                        <span className="text-blue-800 font-mono">{record.scrollLeft}px</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
