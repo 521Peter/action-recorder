@@ -170,25 +170,16 @@ function CodeGeneration() {
                 </CardContent>
             </Card>
 
-            {/* 记录统计 */}
-            <Card>
-                <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                        <span className="text-lg font-semibold">
-                            记录统计
-                        </span>
-                        <Badge variant="default" className="text-sm px-3 py-1">
-                            {records.length} 条记录
-                        </Badge>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* 记录列表 */}
             {records.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>操作记录</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>操作记录</CardTitle>
+                            <Badge variant="default" className="text-sm px-3 py-1">
+                                {records.length} 条记录
+                            </Badge>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
