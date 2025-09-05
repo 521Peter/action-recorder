@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "表单元素抓取器",
+  "name": "动作记录器",
   "version": "1.0",
   "description": "抓取网页中的表单元素并显示",
   "action": {
