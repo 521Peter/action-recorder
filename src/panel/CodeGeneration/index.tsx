@@ -121,10 +121,6 @@ function CodeGeneration() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-primary">
-                操作录制器
-            </h1>
-
             {/* 录制控制区域 */}
             <Card>
                 <CardHeader>
@@ -200,8 +196,8 @@ function CodeGeneration() {
                                 <div
                                     key={index}
                                     className={`p-4 border rounded-md w-full ${record.type === 'scroll'
-                                            ? "bg-blue-50 border-blue-200"
-                                            : "bg-white border-gray-200"
+                                        ? "bg-blue-50 border-blue-200"
+                                        : "bg-white border-gray-200"
                                         }`}
                                 >
                                     {record.type === 'click' ? (
