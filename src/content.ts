@@ -90,15 +90,19 @@ interface ChromeMessage {
 // 监听来自扩展的消息
 chrome.runtime.onMessage.addListener(
   (message: ChromeMessage, _sender, sendResponse) => {
-    console.log('Content: 收到消息', message);
+    console.log("Content: 收到消息", message);
     if (message.action === "testSelector" && message.selector) {
       // 处理测试选择器请求
-      console.log('Content: 开始处理testSelector', {
+      console.log("Content: 开始处理testSelector", {
         selector: message.selector,
         parentSelector: message.parentSelector,
-        iframeIndex: message.iframeIndex
+        iframeIndex: message.iframeIndex,
       });
-      elementHighlighter.highlight(message.selector, message.parentSelector, message.iframeIndex);
+      elementHighlighter.highlight(
+        message.selector,
+        message.parentSelector,
+        message.iframeIndex
+      );
       sendResponse({ success: true });
     } else if (message.action === "getSelector" && clickedElement) {
       // 处理获取选择器请求
@@ -135,67 +139,92 @@ if (window.self === window.top) {
   injector.initializeWithMultipleTiming();
 }
 
-
 // Content Script - 在网页中运行，负责与页面通信
-let isRecording = false
+let isRecording = false;
 
 // 监听来自 popup 的消息
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.action === 'startRecording') {
-    startRecording()
-    sendResponse({ success: true })
-  } else if (message.action === 'stopRecording') {
-    stopRecording()
-    sendResponse({ success: true })
+  if (message.action === "startRecording") {
+    startRecording();
+    sendResponse({ success: true });
+  } else if (message.action === "stopRecording") {
+    stopRecording();
+    sendResponse({ success: true });
   }
-})
+});
 
 function startRecording() {
-  isRecording = true
+  isRecording = true;
 
   // 注入脚本到页面中
-  const script = document.createElement('script')
-  script.src = chrome.runtime.getURL('src/injected_record_script.js')
-  script.type = 'module'
+  const script = document.createElement("script");
+  script.src = chrome.runtime.getURL("src/injected_record_script.js");
+  script.type = "module";
   script.onload = function () {
     // 脚本加载完成后，向页面发送开始录制消息
-    window.postMessage({ type: 'START_RECORDING' }, '*')
-  }
-  document.head.appendChild(script)
+    window.postMessage({ type: "START_RECORDING" }, "*");
+  };
+  document.head.appendChild(script);
 
   // 监听来自注入脚本的消息
-  window.addEventListener('message', handlePageMessage)
+  window.addEventListener("message", handlePageMessage);
 
-  console.log('开始记录点击事件')
+  console.log("开始记录点击事件");
 }
 
 function stopRecording() {
-  isRecording = false
+  isRecording = false;
 
   // 向页面发送停止录制消息
-  window.postMessage({ type: 'STOP_RECORDING' }, '*')
+  window.postMessage({ type: "STOP_RECORDING" }, "*");
 
   // 移除消息监听器
-  window.removeEventListener('message', handlePageMessage)
+  window.removeEventListener("message", handlePageMessage);
 
-  console.log('停止记录点击事件')
+  console.log("停止记录点击事件");
+}
+
+// 检查是否为重复记录的辅助函数
+function isDuplicateRecord(lastRecord: any, newRecord: any): boolean {
+  if (!lastRecord || lastRecord.type !== newRecord.type) {
+    return false;
+  }
+
+  // 对于点击事件，检查 id+tagName 或 selector+tagName 是否相等
+  if (newRecord.type === "click") {
+    const sameIdAndTag =
+      lastRecord.id &&
+      newRecord.id &&
+      lastRecord.id === newRecord.id &&
+      lastRecord.tagName === newRecord.tagName;
+
+    const sameSelectorAndTag =
+      lastRecord.selector &&
+      newRecord.selector &&
+      lastRecord.selector === newRecord.selector &&
+      lastRecord.tagName === newRecord.tagName;
+
+    return sameIdAndTag || sameSelectorAndTag;
+  }
+
+  return false;
 }
 
 function handlePageMessage(event: MessageEvent) {
   // 只处理来自同一窗口的消息
-  if (event.source !== window) return
+  if (event.source !== window) return;
 
   // 如果没有在录制，忽略消息
-  if (!isRecording) return
+  if (!isRecording) return;
 
-  if (event.data.type === 'ELEMENT_CLICKED') {
-    const clickData = event.data.data
+  if (event.data.type === "ELEMENT_CLICKED") {
+    const clickData = event.data.data;
 
     // 保存点击记录到 Chrome 存储
-    chrome.storage.local.get(['clickRecords'], (result) => {
-      const records = result.clickRecords || []
-      records.push({
-        type: 'click',
+    chrome.storage.local.get(["clickRecords"], (result) => {
+      const records = result.clickRecords || [];
+      const newRecord = {
+        type: "click",
         selector: clickData.selector,
         text: clickData.text,
         tagName: clickData.tagName,
@@ -204,36 +233,42 @@ function handlePageMessage(event: MessageEvent) {
         elementType: clickData.elementType,
         label: clickData.label,
         formSelector: clickData.formSelector,
-        url: window.location.href
-      })
+        url: window.location.href,
+      };
 
-      chrome.storage.local.set({ clickRecords: records })
-    })
-
-    console.log('记录点击:', clickData)
-  } else if (event.data.type === 'SCROLL_DETECTED') {
-    const scrollData = event.data.data
+      // 检查是否与最后一条记录重复
+      const lastRecord = records[records.length - 1];
+      if (!isDuplicateRecord(lastRecord, newRecord)) {
+        records.push(newRecord);
+        chrome.storage.local.set({ clickRecords: records });
+        console.log("记录点击:", clickData);
+      } else {
+        console.log("跳过重复点击记录:", clickData);
+      }
+    });
+  } else if (event.data.type === "SCROLL_DETECTED") {
+    const scrollData = event.data.data;
 
     // 保存滚动记录到 Chrome 存储
-    chrome.storage.local.get(['clickRecords'], (result) => {
-      const records = result.clickRecords || []
+    chrome.storage.local.get(["clickRecords"], (result) => {
+      const records = result.clickRecords || [];
       records.push({
-        type: 'scroll',
+        type: "scroll",
         scrollTop: scrollData.scrollTop,
         scrollLeft: scrollData.scrollLeft,
-        url: window.location.href
-      })
+        url: window.location.href,
+      });
 
-      chrome.storage.local.set({ clickRecords: records })
-    })
+      chrome.storage.local.set({ clickRecords: records });
+    });
 
-    console.log('记录滚动:', scrollData)
+    console.log("记录滚动:", scrollData);
   }
 }
 
 // 页面加载时检查是否正在录制
-chrome.storage.local.get(['isRecording'], (result) => {
+chrome.storage.local.get(["isRecording"], (result) => {
   if (result.isRecording) {
-    startRecording()
+    startRecording();
   }
-})
+});

@@ -218,7 +218,7 @@ function CodeGeneration() {
                                                 <div className="flex items-center space-x-2">
                                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                                     <span className="font-bold text-green-700 text-base">
-                                                        点击操作
+                                                        {record.elementType || 'unknown'}
                                                     </span>
                                                 </div>
                                                 <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
@@ -226,27 +226,17 @@ function CodeGeneration() {
                                                 </Badge>
                                             </div>
 
-                                            <div className="bg-white/70 rounded-md p-2 border border-green-200">
-                                                <p className="font-medium text-green-800 text-sm">
-                                                    📍 {record.text || record.label || '无文本'}
-                                                </p>
-                                            </div>
-
                                             {record.label && (
                                                 <div className="bg-emerald-50 rounded-md p-1.5 border border-emerald-200">
                                                     <p className="text-xs text-emerald-700 font-medium">
-                                                        🏷️ 标签: {record.label}
+                                                        🏷️ Label: {record.label}
                                                     </p>
                                                 </div>
                                             )}
 
                                             <div className="grid grid-cols-2 gap-1 text-xs">
                                                 <div className="flex items-center space-x-1">
-                                                    <span className="text-gray-500 font-medium">类型:</span>
-                                                    <span className="text-gray-700">{record.elementType || 'unknown'}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-1">
-                                                    <span className="text-gray-500 font-medium">标签:</span>
+                                                    <span className="text-gray-500 font-medium">TagName:</span>
                                                     <span className="text-gray-700">{record.tagName || 'unknown'}</span>
                                                 </div>
                                                 {record.id && (
