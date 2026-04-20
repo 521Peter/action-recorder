@@ -1,30 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Trash, Play, RotateCcw, Code } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
+import { Save, Trash, Play, RotateCcw, Code, Download } from "lucide-react";
+import Editor from "react-simple-code-editor";
+import { highlight, languages } from "prismjs";
+import "prismjs/components/prism-javascript";
+import "prismjs/themes/prism.css";
 import { removeComments } from "@/utils/scriptInjector";
-
-// 创建简化的 toast 函数
-const showToast = {
-  success: (message: string) => {
-    // 这里可以使用 useToast hook，但为了简化，我们先用一个简单的实现
-    console.log('Success:', message);
-  },
-  error: (message: string) => {
-    console.log('Error:', message);
-  }
-};
 
 /**
  * 脚本注入器组件
  * 集成了 injected-script 项目的功能
  */
-function Debug() {
+function Debug({
+  pendingCode,
+  firstRecordUrl,
+  onPendingCodeHandled,
+}: {
+  pendingCode?: string | null;
+  firstRecordUrl?: string | null;
+  onPendingCodeHandled?: () => void;
+}) {
   const [customCode, setCustomCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  // 标记是否已处理过当前 pendingCode，避免重复执行
+  const pendingCodeRef = useRef<string | null>(null);
 
   // 加载已保存的脚本
   useEffect(() => {
@@ -34,6 +36,55 @@ function Debug() {
       }
     });
   }, []);
+
+  // 当从代码生成页传入待填充代码时，自动保存并刷新页面
+  useEffect(() => {
+    if (!pendingCode || pendingCode === pendingCodeRef.current) return;
+    pendingCodeRef.current = pendingCode;
+
+    const code = pendingCode.trim();
+    if (!code) return;
+
+    // 填充代码到编辑器
+    setCustomCode(code);
+
+    // 保存脚本
+    chrome.storage.local.set({ customScript: code }, async () => {
+      toast({ title: "脚本已保存", description: "正在刷新页面..." });
+
+      // 刷新页面
+      try {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (tab.id && tab.url) {
+          const origin = new URL(tab.url).origin;
+          const response = await chrome.runtime.sendMessage({
+            action: "clearSiteData",
+            origin,
+          });
+          if (response && response.success) {
+            chrome.tabs.reload(tab.id);
+          } else {
+            toast({
+              title: "清除网站数据失败",
+              description: response?.error || "未知错误",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        toast({
+          title: "刷新失败",
+          description: (error as Error).message,
+          variant: "destructive",
+        });
+      }
+
+      onPendingCodeHandled?.();
+    });
+  }, [pendingCode]);
 
   // 保存脚本
   const handleSaveScript = async () => {
@@ -52,6 +103,67 @@ function Debug() {
         description: "将在所有网站自动执行",
       });
     });
+  };
+
+  // 导出脚本为 JS 文件
+  const handleExportScript = async () => {
+    const code = customCode.trim();
+    if (!code) {
+      toast({
+        title: "没有可导出的脚本",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 获取当前标签页 hostname 生成文件名
+    const getFileName = (hostname: string) => {
+      const parts = hostname.split(".");
+      if (parts[0] === "www") parts.shift();
+      return parts.join("-");
+    };
+
+    try {
+      // 优先使用记录中的第一个 URL 生成文件名
+      const targetUrl = firstRecordUrl || (await (async () => {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        return tab.url;
+      })());
+
+      const hostname = targetUrl ? new URL(targetUrl).hostname : "script";
+      const fileName = `${getFileName(hostname)}.js`;
+
+      // 在第二行插入 apiExpand 导入语句
+      const lines = code.split("\n");
+      lines.splice(1, 0, "import '../utils/apiExpand';");
+      const codeWithImport = lines.join("\n");
+
+      const blob = new Blob([codeWithImport], { type: "text/javascript" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: `已导出为 ${fileName}` });
+
+      // 导出后删除脚本
+      chrome.storage.local.remove("customScript", () => {
+        setCustomCode("");
+        // toast({
+        //   title: "脚本已删除",
+        // });
+      });
+    } catch {
+      toast({
+        title: "导出失败",
+        variant: "destructive",
+      });
+    }
   };
 
   // 删除脚本
@@ -163,7 +275,7 @@ function Debug() {
         // 清除当前网站的所有数据
         const response = await chrome.runtime.sendMessage({
           action: "clearSiteData",
-          origin: origin
+          origin: origin,
         });
 
         if (response && response.success) {
@@ -172,7 +284,7 @@ function Debug() {
         } else {
           toast({
             title: "清除网站数据失败",
-            description: response?.error || '未知错误',
+            description: response?.error || "未知错误",
             variant: "destructive",
           });
         }
@@ -213,11 +325,7 @@ function Debug() {
                 <Play className="h-4 w-4 mr-1" />
                 测试脚本
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleReloadPage}
-              >
+              <Button size="sm" variant="outline" onClick={handleReloadPage}>
                 <RotateCcw className="h-4 w-4 mr-1" />
                 刷新页面
               </Button>
@@ -226,29 +334,40 @@ function Debug() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <Textarea
-            value={customCode}
-            onChange={(e) => setCustomCode(e.target.value)}
-            placeholder="在此输入您的 JavaScript 代码..."
-            className="min-h-[350px] font-mono text-sm resize-y"
-          />
+          <div
+            className="rounded-md border overflow-auto"
+            style={{ minHeight: 350 }}
+          >
+            <Editor
+              value={customCode}
+              onValueChange={setCustomCode}
+              highlight={(code) =>
+                highlight(code, languages.javascript, "javascript")
+              }
+              padding={12}
+              placeholder="在此输入您的 JavaScript 代码..."
+              style={{
+                fontFamily: "monospace",
+                fontSize: 13,
+                minHeight: 350,
+                background: "transparent",
+              }}
+            />
+          </div>
 
           {/* 保存和删除按钮 */}
           <div className="flex gap-2">
-            <Button
-              onClick={handleSaveScript}
-              size="sm"
-            >
+            <Button onClick={handleSaveScript} size="sm">
               <Save className="h-4 w-4 mr-1" />
               保存脚本
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleDeleteScript}
-              size="sm"
-            >
+            <Button variant="outline" onClick={handleDeleteScript} size="sm">
               <Trash className="h-4 w-4 mr-1" />
               删除脚本
+            </Button>
+            <Button variant="outline" onClick={handleExportScript} size="sm">
+              <Download className="h-4 w-4 mr-1" />
+              导出脚本
             </Button>
           </div>
         </CardContent>
@@ -261,10 +380,22 @@ function Debug() {
             <p className="font-semibold">使用说明：</p>
             <ul className="space-y-1 ml-4">
               <li>• 在文本框中输入 JavaScript 代码</li>
-              <li>• 点击 <Save className="inline h-3 w-3 mx-1" /> 保存脚本到本地存储</li>
-              <li>• 点击 <Play className="inline h-3 w-3 mx-1" /> 在当前页面测试脚本</li>
-              <li>• 点击 <RotateCcw className="inline h-3 w-3 mx-1" /> 清除当前页面缓存并刷新</li>
-              <li>• 点击 <Trash className="inline h-3 w-3 mx-1" /> 删除已保存的脚本</li>
+              <li>
+                • 点击 <Save className="inline h-3 w-3 mx-1" />{" "}
+                保存脚本到本地存储
+              </li>
+              <li>
+                • 点击 <Play className="inline h-3 w-3 mx-1" />{" "}
+                在当前页面测试脚本
+              </li>
+              <li>
+                • 点击 <RotateCcw className="inline h-3 w-3 mx-1" />{" "}
+                清除当前页面缓存并刷新
+              </li>
+              <li>
+                • 点击 <Trash className="inline h-3 w-3 mx-1" />{" "}
+                删除已保存的脚本
+              </li>
             </ul>
           </div>
         </CardContent>

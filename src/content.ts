@@ -1,6 +1,7 @@
-import { generateUniqueSelector } from "./utils/genSelector.ts";
+import { generateUniqueSelector } from "./utils/genSelector/index.ts";
 import { ElementHighlighter } from "./utils/elementHighlighter.ts";
 import { ScriptInjector } from "./utils/scriptInjector.ts";
+import { Node, FormElementType } from "./types";
 
 // 创建全局高亮器实例
 const elementHighlighter = new ElementHighlighter();
@@ -158,7 +159,7 @@ function startRecording() {
 
   // 注入脚本到页面中
   const script = document.createElement("script");
-  script.src = chrome.runtime.getURL("src/injected_record_script.js");
+  script.src = chrome.runtime.getURL("src/scripts/injected_record_script.js");
   script.type = "module";
   script.onload = function () {
     // 脚本加载完成后，向页面发送开始录制消息
@@ -222,8 +223,8 @@ function handlePageMessage(event: MessageEvent) {
 
     // 保存点击记录到 Chrome 存储
     chrome.storage.local.get(["clickRecords"], (result) => {
-      const records = result.clickRecords || [];
-      const newRecord = {
+      const records = (result.clickRecords || []) as Node[];
+      const newRecord: Node = {
         type: "click",
         selector: clickData.selector,
         text: clickData.text,
@@ -233,12 +234,22 @@ function handlePageMessage(event: MessageEvent) {
         elementType: clickData.elementType,
         label: clickData.label,
         formSelector: clickData.formSelector,
-        url: window.location.href,
+        url: clickData.url,
+        iframeSelector: clickData.iframeSelector,
       };
 
       // 检查是否与最后一条记录重复
       const lastRecord = records[records.length - 1];
+      // 最后一条点击记录
+      const lastClickRecord = records.filter((r) => r.type === "click").pop();
       if (!isDuplicateRecord(lastRecord, newRecord)) {
+        // 如果最后一条记录的elementType为submit
+        if (
+          lastClickRecord &&
+          lastClickRecord.elementType === FormElementType.SUBMIT
+        ) {
+          newRecord.elementType = FormElementType.SUCCESS_WRAP;
+        }
         records.push(newRecord);
         chrome.storage.local.set({ clickRecords: records });
         console.log("记录点击:", clickData);

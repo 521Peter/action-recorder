@@ -1,4 +1,4 @@
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
 
 /**
  * 独立的 toast 工具函数，可以在任何地方使用

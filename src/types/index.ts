@@ -16,39 +16,31 @@ export enum FormElementType {
   CITY = "city",
   STATE = "state",
   ADDRESS = "address",
+  DIALOG = "dialog",
+  SUBMIT = "submit",
+  SUCCESS_WRAP = "successWrap",
 }
 
-// 任务节点接口
-export interface TaskNode {
-  parentSelector?: string;
-  selector: string;
-  type: FormElementType;
-  scroll?: boolean;
-  waitForElement?: boolean;
-}
-
-// 任务配置接口
-export interface TaskConfig {
+export interface Node {
+  type: "click" | "scroll";
+  selector?: string;
+  text?: string;
+  tagName?: string;
+  className?: string;
+  id?: string;
+  elementType?: FormElementType;
+  label?: string;
+  formSelector?: string | null;
+  scrollTop?: number;
+  scrollLeft?: number;
   url: string;
-  node: TaskNode[];
-  formSelector: string;
-  successSelector?: string; // 成功选择器
-  successText?: string; // 成功文本
-  iframeSelector?: string;
-}
-
-// 点击记录接口
-export interface ClickRecord {
-  type: 'click' | 'scroll'
-  selector?: string
-  text?: string
-  tagName?: string
-  className?: string
-  id?: string
-  elementType?: FormElementType
-  label?: string
-  formSelector?: string | null
-  scrollTop?: number
-  scrollLeft?: number
-  url: string
+  waitForElement?: boolean;
+  scroll?: boolean;
+  // 页面是否刷新
+  isPageReloaded?: boolean;
+  options?: {
+    newSearchParams?: Record<string, string> | null;
+    newHash?: string | null;
+  };
+  iframeSelector?: string | null;
 }

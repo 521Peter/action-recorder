@@ -1,14 +1,15 @@
 {
-  "name": "form-scraper",
+  "name": "action-recorder",
   "version": "1.0.0",
-  "description": "表单元素抓取器",
+  "description": "动作记录器",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "build:injected": "vite build --config vite.injected.config.ts",
+    "dev": "npm run build:injected && vite",
+    "build": "npm run build:injected && tsc && vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "zip": "node scripts/update-version.cjs && npm run build && (cd dist && zip -r ../action-recorder.zip .)"
+    "zip": "node scripts/update-version.cjs && npm run build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -16,13 +17,16 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
+    "@types/lodash": "^4.17.20",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "js-beautify": "^1.15.4",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.294.0",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-simple-code-editor": "^0.14.1",
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
     "terser": "^5.43.1"

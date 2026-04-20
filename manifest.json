@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "动作记录器",
-  "version": "1.1",
+  "version": "1.8",
   "description": "抓取网页中的表单元素并显示",
   "action": {
     "default_icon": {
@@ -42,8 +42,9 @@
     {
       "resources": [
         "images/*",
-        "src/injected_script.js",
-        "src/injected_record_script.js"
+        "src/scripts/injected_script.js",
+        "assets/*",
+        "src/scripts/injected_record_script.js"
       ],
       "matches": [
         "<all_urls>"

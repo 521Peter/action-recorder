@@ -155,7 +155,7 @@ export class ScriptInjector {
   executeInjection(): void {
     // 首先注入基础脚本（上游初始化脚本）
     this.injectViaScriptTag(
-      chrome.runtime.getURL("src/injected_script.js"),
+      chrome.runtime.getURL("src/scripts/injected_script.js"),
       () => {
         // 然后注入用户自定义脚本
         chrome.storage.local.get("customScript", async (data) => {

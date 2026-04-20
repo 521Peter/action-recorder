@@ -1,7 +1,6 @@
 import { FormElementType } from "../types";
 
-
-// 标签文本提取器 
+// 标签文本提取器
 class LabelExtractor {
   static getLabelText(inputSelector: string, doc: Document = document): string {
     const input = doc.querySelector(inputSelector);
@@ -26,12 +25,16 @@ class LabelExtractor {
 
   private static getLabelByFor(input: Element, doc: Document): string {
     if (!input.id) return "";
-    const labelByFor = doc.querySelector(`label[for="${input.id}"]`) as HTMLLabelElement;
+    const labelByFor = doc.querySelector(
+      `label[for="${input.id}"]`
+    ) as HTMLLabelElement;
     return labelByFor?.innerText.trim() || "";
   }
 
   private static getLabelByParent(input: Element): string {
-    const parentLabel = input.parentElement?.closest("label") as HTMLLabelElement;
+    const parentLabel = input.parentElement?.closest(
+      "label"
+    ) as HTMLLabelElement;
     return parentLabel?.innerText.trim() || "";
   }
 
@@ -76,6 +79,7 @@ class ElementTypeDetector {
     [FormElementType.CITY]: ["city"],
     [FormElementType.STATE]: ["state"],
     [FormElementType.ADDRESS]: ["address"],
+    [FormElementType.SUBMIT]: ["submit"],
   };
 
   private static readonly selectorPatterns = {
@@ -90,9 +94,14 @@ class ElementTypeDetector {
     [FormElementType.ZIP]: ["zip", "postal", "code", "loc"],
     [FormElementType.NUMBER]: ["number", "num"],
     [FormElementType.TEXT]: ["search"],
+    [FormElementType.SUBMIT]: ["submit"],
   };
 
-  static determineElementType(element: Element, selector: string, doc: Document = document): FormElementType {
+  static determineElementType(
+    element: Element,
+    selector: string,
+    doc: Document = document
+  ): FormElementType {
     const tagName = element.tagName.toLowerCase();
     const type = element.getAttribute("type");
 
@@ -110,7 +119,10 @@ class ElementTypeDetector {
     return this.detectTypeBySelector(selector);
   }
 
-  private static getBaseTypeByTag(tagName: string, type: string | null): FormElementType {
+  private static getBaseTypeByTag(
+    tagName: string,
+    type: string | null
+  ): FormElementType {
     const typeMap: Record<string, FormElementType> = {
       select: FormElementType.SELECT,
       button: FormElementType.CLICK,
@@ -129,6 +141,7 @@ class ElementTypeDetector {
         checkbox: FormElementType.CLICK,
         radio: FormElementType.CLICK,
         button: FormElementType.CLICK,
+        submit: FormElementType.SUBMIT,
       };
       return inputTypeMap[type] || FormElementType.TEXT;
     }
@@ -136,14 +149,17 @@ class ElementTypeDetector {
     return tagName === "input" ? FormElementType.TEXT : FormElementType.CLICK;
   }
 
-  private static detectTypeByLabel(inputSelector: string, doc: Document = document): FormElementType | null {
+  private static detectTypeByLabel(
+    inputSelector: string,
+    doc: Document = document
+  ): FormElementType | null {
     const labelText = LabelExtractor.getLabelText(inputSelector, doc);
     if (!labelText) return null;
 
     const lowerLabelText = labelText.toLowerCase();
 
     for (const [type, patterns] of Object.entries(this.labelPatterns)) {
-      if (patterns.some(pattern => lowerLabelText.includes(pattern))) {
+      if (patterns.some((pattern) => lowerLabelText.includes(pattern))) {
         return type as FormElementType;
       }
     }
@@ -155,7 +171,7 @@ class ElementTypeDetector {
     const lowerSelector = selector.toLowerCase();
 
     for (const [type, patterns] of Object.entries(this.selectorPatterns)) {
-      if (patterns.some(pattern => lowerSelector.includes(pattern))) {
+      if (patterns.some((pattern) => lowerSelector.includes(pattern))) {
         return type as FormElementType;
       }
     }
